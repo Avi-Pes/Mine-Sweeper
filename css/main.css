@@ -1,0 +1,101 @@
+body {
+    background-color: antiquewhite;
+    font-size: 20px;
+}
+
+div {
+    /* height: 100px; */
+    margin: 50px;
+    background-color: aquamarine;
+    text-align: center;
+    overflow: auto;
+}
+
+
+/* TODO: header */
+
+
+/* TODO: controller */
+
+.controller {
+    padding: 10px;
+}
+
+h4 {
+    background-color: aquamarine;
+    padding: 10px;
+}
+
+.timer {
+    background-color: rgb(26, 24, 24);
+    padding: 3px;
+    color: rgb(204, 26, 26);
+    font-family: Stencil Std, fantasy;
+    font-weight: 300;
+    font-size: 30px;
+}
+
+
+/* TODO: game area =".game-container" */
+
+.game-container {
+    display: flex;
+    padding: 10px;
+    max-width: fit-content;
+    justify-content: center;
+    margin: auto;
+    background-color: rgb(49, 82, 82);
+    border-radius: 2%;
+}
+
+
+/* TODO: table/board */
+
+.mine-field {
+    background-color: hsl(0, 4%, 73%);
+    border: 2px solid rgb(77, 76, 76);
+}
+
+.mine-field td {
+    border: 2px solid rgb(56, 56, 56);
+    height: 30px;
+    width: 30px;
+    cursor: pointer;
+}
+
+.opened-cell {
+    background-color: hsla(226, 7%, 53%, 0.795);
+}
+
+.mine-cell {
+    background-color: rgba(207, 96, 96, 0.61);
+}
+
+.flag {
+    background-color: rgba(46, 151, 78, 0.678);
+}
+
+
+/* TODO: buttons */
+
+
+/* TODO: un-clicked */
+
+
+/* TODO: clicked-empty */
+
+
+/* TODO: clicked-num */
+
+
+/* TODO: clicked-mine */
+
+
+/* TODO: clicked-flag */
+
+
+/* TODO: footer */
+
+.footer {
+    margin-top: 70px;
+}

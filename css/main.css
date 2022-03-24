@@ -22,11 +22,11 @@ div {
 }
 
 h4 {
-    background-color: aquamarine;
+    background-color: rgb(146, 185, 94);
     padding: 10px;
 }
 
-.timer {
+span {
     background-color: rgb(26, 24, 24);
     padding: 3px;
     color: rgb(204, 26, 26);

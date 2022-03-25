@@ -4,14 +4,17 @@ var gBoard = [];
 var gMines = [];
 var gElMines;
 var gFlags = [];
-var gSize = 10;
-var gMinesAmount = 5; //! cant be bigger than gSize
-var gLives
+var gSize = 4;
+var gMinesAmount = 2;
+var gLives = 2;
 var gElTable = document.querySelector('table');
 var gElTimer = document.querySelector('.timer');
-var gElLives = document.querySelector('.lives')
+var gElLives = document.querySelector('.lives');
+var gElMinesCounter = document.querySelector('.mines-counter')
 var gTimeStart;
+var gEndTime
 var gInterval;
+var gPeekMode = false;
 const EMPTY = '';
 const MINE = '*';
 
@@ -25,8 +28,9 @@ const MINE = '*';
 function init() {
     gBoard = createSquaredBoard(gSize);
     gMines = spreadMines(+gMinesAmount).sort();
-    gLives = 3;
     getAllNumbers(gBoard);
+    gElLives.innerText = gLives;
+    gElMinesCounter.innerText = gMinesAmount
     renderMineField(gBoard, '.mine-field');
 
 
@@ -116,7 +120,7 @@ function renderMineField(matrixBoard, classToRenderIn) {
         }
     }
     tableStrHTML += '</tr> \n'
-    console.log('=====>', 'tableStrHTML', tableStrHTML);
+        // console.log('=====>', 'tableStrHTML: \n', tableStrHTML);
     var elBoard = document.querySelector(classToRenderIn)
     elBoard.innerHTML = tableStrHTML
 }
@@ -124,11 +128,18 @@ function renderMineField(matrixBoard, classToRenderIn) {
 function cellClicked(elCell) {
     var cellI = +elCell.dataset.i;
     var cellJ = +elCell.dataset.j;
-    if (elCell.classList.contains('flag')) return
-    if (!gInterval) {
+    if (gInterval === 0) {
         timer();
     }
+    if (elCell.classList.contains('opened-cell') || elCell.classList.contains('flag')) return
     checkGameOver(gBoard[cellI][cellJ]);
+
+    if (gPeekMode) {
+        gPeekMode = false;
+        hintPeek(elCell);
+        return
+    }
+
 
     switch (gBoard[cellI][cellJ]) {
         case MINE:
@@ -139,13 +150,11 @@ function cellClicked(elCell) {
             break;
         case '':
             //TODO: recursive opening
-            blankCellHandler(elCell)
+            recursiveOpener(elCell)
             break;
-        default:
+        default: //a cell with a number
             //TODO: put this in a function 
             openCell(elCell)
-                // elCell.innerText = gBoard[cellI][cellJ];
-                // elCell.classList.add('opened-cell');
             break;
     }
     checkGameOver()
@@ -155,74 +164,73 @@ function cellClicked(elCell) {
 function openCell(elCell) {
     elCell.innerText = gBoard[+elCell.dataset.i][+elCell.dataset.j];
     elCell.classList.add('opened-cell');
-    elCell.dataset.isOpened = true;
+    elCell.dataset.isOpened = "true";
 }
 
-function flagAdder(ev) {
-    ev.preventDefault();
-    var elCell = ev.srcElement
-    console.log('=====>', 'ev', ev);
-    if (!gInterval) timer();
-    if (elCell.classList.contains('opened-cell')) return
+function flagAdder(ev, fromRecursiveOpen = false) {
+    if (!fromRecursiveOpen) ev.preventDefault();
+    var elCell = (fromRecursiveOpen) ? ev : ev.srcElement
+    if (gInterval === 0) timer();
 
     // console.log('=====>', 'elCell.dataset', elCell.dataset);
     var cellI = +elCell.dataset.i;
     var cellJ = +elCell.dataset.j;
-
-    if (elCell.dataset.isFlagged === "false") {
-        elCell.dataset.isFlagged = "true";
-        gFlags.push([cellI, cellJ]);
-    } else {
-        if (elCell.innerText !== MINE) {
+    if ((elCell.dataset.isFlagged === "true" || fromRecursiveOpen)) {
+        //for a flagged cell:
+        if (elCell.innerText !== MINE) { //is already flagged or bombed cell:
             elCell.dataset.isFlagged = "false";
             gFlags.splice(isArrayInMatrix(gFlags, [cellI, cellJ]))
         }
+
+    } else /* (elCell.dataset.isFlagged === "false") */ {
+        if (elCell.classList.contains('opened-cell')) return //?? interrupting flags?
+        if (gFlags.length >= gMines.length) return
+        elCell.dataset.isFlagged = "true";
+        gFlags.push([cellI, cellJ]);
     }
+
+
     gFlags.sort();
     elCell.classList.toggle('flag');
+    gElMinesCounter.innerText = (elCell.classList.contains('flag')) ? --gElMinesCounter.innerText : ++gElMinesCounter.innerText
+
+
     checkGameOver();
 }
 
-function blankCellHandler(elCell) {
-    var blanks = [];
-    openCell(elCell);
+function recursiveOpener(elCell, fromRecursiveOpen = false) {
+    if (!fromRecursiveOpen) openCell(elCell);
     for (var i = -1; i < 2; i++) {
         for (var j = -1; j < 2; j++) { // 9 cells to check
             var iToCheck = +elCell.dataset.i + i;
             var jToCheck = +elCell.dataset.j + j;
             var checkedCell = document.querySelector(`[data-i='${iToCheck}'][data-j='${jToCheck}']`);
-            // console.log('=====>', 'checkedCell', checkedCell);
             if (!checkedCell || checkedCell.dataset.isOpened === 'true' || checkedCell.dataset.mine === 'true') continue
-            else if (gBoard[iToCheck][jToCheck] > 0) {
+                //left with only numbers and empties to check:
+            if (elCell.dataset.isFlagged === 'true') {
+                flagAdder(checkedCell, true)
+            }
+
+            if (gBoard[iToCheck][jToCheck] > 0) {
                 openCell(checkedCell);
-                continue;
             } else if (gBoard[iToCheck][jToCheck] === EMPTY) {
                 openCell(checkedCell);
-                blanks.push(checkedCell);
+                recursiveOpener(checkedCell, true);
             }
 
         }
     }
-    // console.log('=====>', 'blanks', blanks);
-    blanks.sort()
-    for (var idx = 0; idx < blanks.length; idx++) {
-        var currCell = blanks[idx];
-
-        blankCellHandler(currCell);
-        blanks.shift();
-    };
 
 }
 
 function checkGameOver() {
+    var isGameOver = false;
 
 
-    if (gLives === 0) {
-        //DONE: check deaths
-        gameLost()
-
-
-    } else {
+    if (gLives === 0) { //check if lost all life
+        isGameOver = true;
+        gameLost();
+    } else { //check for the win if all flags mark all mines && all other cells are open
         if (gMines.length === gFlags.length) {
             var isAllFlagged = true;
             for (var i = 0; i < gMines.length; i++) {
@@ -244,17 +252,20 @@ function checkGameOver() {
                 var elCell = elCells[idx];
                 if (elCell.dataset.isOpened === 'false') {
                     if (elCell.dataset.mine === 'false') {
-                        console.log('im in2');
                         isAllOpen = false;
                     }
                 }
             };
-            console.log('=====>', 'isAllOpen', isAllOpen);
+            // console.log('=====>', 'isAllOpen', isAllOpen);
 
-            if (isAllFlagged && isAllOpen) gameWon();
+            if (isAllFlagged && isAllOpen) {
+                isGameOver = true;
+                gameWon();
+            }
+
         }
     }
-
+    return isGameOver
 }
 
 function gameLost() {
@@ -276,11 +287,13 @@ function mineClicked(elCell) {
     gFlags.push([+elCell.dataset.i, +elCell.dataset.j]);
     gFlags.sort();
     elCell.classList.toggle('flag');
+    gElMinesCounter.innerText = --gElMinesCounter.innerText
     checkGameOver();
 
     elCell.style.backgroundColor = 'red';
     gLives--;
     gElLives.innerText = gLives;
+
 
     if (!gElMines) {
         gElMines = document.querySelectorAll('.mine-cell')
@@ -301,7 +314,8 @@ function mineClicked(elCell) {
 }
 
 function timer(stop) {
-    if (!stop && !gInterval) {
+    if (checkGameOver() === true) return
+    if (!stop && gInterval === 0) {
         gTimeStart = new Date;
         gInterval = setInterval(timer, 100);
     }
@@ -314,6 +328,26 @@ function timer(stop) {
         var endTime = currentTime;
         clearInterval(gInterval);
         gElTimer.innerText = endTime;
+        gEndTime = currentTime - gTimeStart;
+    }
+}
+
+
+function chooseDifficulty(boardSize, MinesAmount) {
+    gLives = (MinesAmount === 2) ? 2 : 3
+    gSize = boardSize
+    gMinesAmount = MinesAmount
+    init()
+}
+
+
+//TODO: 
+function hintPeek() {
+    for (var i = -1; i < 2; i++) {
+        for (var j = -1; j < 2; j++) { // 9 cells to check
+            var iToCheck = +elCell.dataset.i + i;
+            var jToCheck = +elCell.dataset.j + j;
+        }
     }
 }
 
@@ -327,11 +361,22 @@ function timer(stop) {
 //DONE: render board to html
 //DONE: function to change classes in HTML
 //DONE: function gets location and take care of what inside (if blown, if empty, if show number)
-//TODO: BONUS if count adjacents = 0 ==> recursive open empties and search mines
-//TODO:Show a timer that starts on first click (right / left) and stops when game is over.
-//TODO:LOSE: when clicking a mine, all mines should be revealed
-//TODO:WIN: all the mines are flagged, and all the other cells are shown
-//TODO:Support 3 levels of the game --- Beginner (4*4 with 2 MINES), Medium (8 * 8 with 12 MINES), Expert (12 * 12 with 30 MINES)
+//DONE: BONUS if count adjacents = 0 ==> recursive open empties and search mines
+//DONE:Show a timer that starts on first click (right / left) and stops when game is over.
+//DONE:LOSE: when clicking a mine, all mines should be revealed
+//DONE:WIN: all the mines are flagged, and all the other cells are shown
+//DONE:fix timer bug run again after game
+//DONE:Support 3 difficulties levels of the game --- Beginner (4*4 with 2 MINES), Medium (8 * 8 with 12 MINES), Expert (12 * 12 with 30 MINES)
+//DONE:mines left indicator
+//TODO:peek - hint
+//TODO:safe cell - hint
+//TODO:score/high-score
+//TODO:smiley rest button
+//TODO: manual deploy mode
+//TODO: 7 boom mode
+//TODO:design lives
+//TODO:header
+//TODO:footer
+//TODO: lose red indicator on mines not open
 //TODO:make your Minesweeper look great
-//TODO:
 //TODO:

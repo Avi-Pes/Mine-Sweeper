@@ -7,10 +7,13 @@ var gFlags = [];
 var gSize = 4;
 var gMinesAmount = 2;
 var gLives = 2;
+var gHints = 3;
 var gElTable = document.querySelector('table');
 var gElTimer = document.querySelector('.timer');
 var gElLives = document.querySelector('.lives');
+var gElHints = document.querySelector('.hints-counter');
 var gElMinesCounter = document.querySelector('.mines-counter');
+var gElPeekBtn;
 var gInterval = 0;
 var gTimeStart;
 var gTimerBlocked = false;
@@ -35,7 +38,10 @@ function init() {
     getAllNumbers(gBoard);
     gInterval = 0;
     gFlags = [];
+    gPeekMode = false
     gElLives.innerText = gLives;
+    gHints = 3;
+    gElHints.innerText = gHints;
     gElMinesCounter.innerText = gMinesAmount;
     gElTimer.innerText = '00.00s';
     gTimerBlocked = false;
@@ -135,15 +141,26 @@ function renderMineField(matrixBoard, classToRenderIn) {
 }
 
 function cellClicked(elCell) {
+
+
     var cellI = +elCell.dataset.i;
     var cellJ = +elCell.dataset.j;
     timeHandler();
-    if (elCell.classList.contains('opened-cell') || elCell.classList.contains('flag')) return
+    // if (elCell.classList.contains('opened-cell') || elCell.classList.contains('flag')) return
+    if (elCell.dataset.isFlagged === 'true' || elCell.dataset.isOpened === 'true') return
     checkGameOver(gBoard[cellI][cellJ]);
 
     if (gPeekMode) {
-        gPeekMode = false;
-        hintPeek(elCell);
+        gHints--;
+        gElHints.innerText = gHints;
+        var allTds = gElTable.querySelectorAll('td');
+        allTds.forEach(td => {
+            if (gPeekMode) {
+                td.style.cursor = 'help'
+            } else td.style.cursor = 'pointer'
+        })
+
+        hintPeekRender(elCell);
         return
     }
 
@@ -153,14 +170,14 @@ function cellClicked(elCell) {
 
             mineClicked(elCell)
 
-            //TODO: lose life
+            //Done: lose life
             break;
         case '':
-            //TODO: recursive opening
+            //Done: recursive opening
             recursiveOpener(elCell)
             break;
         default: //a cell with a number
-            //TODO: put this in a function 
+            //Done: put this in a function 
             openCell(elCell)
             break;
     }
@@ -178,6 +195,7 @@ function flagToggle(ev) {
     ev.preventDefault();
     var elCell = ev.srcElement
     timeHandler();
+    if (gPeekMode) return
 
     // console.log('=====>', 'elCell.dataset', elCell.dataset);
     var cellI = +elCell.dataset.i;
@@ -190,7 +208,8 @@ function flagToggle(ev) {
         }
 
     } else /* (elCell.dataset.isFlagged === "false") */ {
-        if (elCell.classList.contains('opened-cell')) return //?? interrupting flags?
+        // if (elCell.classList.contains('opened-cell')) return //?? interrupting flags?
+        if (elCell.dataset.isOpened === 'true') return //?? interrupting flags?
         if (gFlags.length >= gMines.length) return
         elCell.dataset.isFlagged = "true";
         gFlags.push([cellI, cellJ]);
@@ -198,8 +217,9 @@ function flagToggle(ev) {
 
 
     gFlags.sort();
-    elCell.classList.toggle('flag');
-    gElMinesCounter.innerText = (elCell.classList.contains('flag')) ? --gElMinesCounter.innerText : ++gElMinesCounter.innerText
+    if (elCell.dataset.isOpened === 'false') elCell.classList.toggle('flag');
+    // gElMinesCounter.innerText = (elCell.classList.contains('flag')) ? --gElMinesCounter.innerText : ++gElMinesCounter.innerText
+    gElMinesCounter.innerText = (elCell.dataset.isFlagged = 'true') ? --gElMinesCounter.innerText : ++gElMinesCounter.innerText
 
 
     checkGameOver();
@@ -292,7 +312,7 @@ function mineClicked(elCell) {
     elCell.dataset.isFlagged = "true";
     gFlags.push([+elCell.dataset.i, +elCell.dataset.j]);
     gFlags.sort();
-    elCell.classList.toggle('flag');
+    // elCell.classList.toggle('flag');
     gElMinesCounter.innerText = --gElMinesCounter.innerText
     checkGameOver();
 
@@ -364,14 +384,106 @@ function calculateHighScore() {
 
 
 //TODO: 
-function hintPeek() {
+function hintPeek(btn) {
+    if (gHints <= 0) return
+    gElPeekBtn = btn
+    gPeekMode = !gPeekMode;
+    if (gPeekMode) {
+        btn.style.backgroundColor = '#bcac52';
+    } else btn.style = 'initial';
+
+    var allTds = gElTable.querySelectorAll('td');
+    allTds.forEach(td => {
+        if (gPeekMode) {
+            td.style.cursor = 'help'
+        } else td.style.cursor = 'pointer'
+
+    });
+
+
+}
+
+function hintPeekRender(elCell) {
+    var peekedCells = [];
     for (var i = -1; i < 2; i++) {
         for (var j = -1; j < 2; j++) { // 9 cells to check
-            var iToCheck = +elCell.dataset.i + i;
-            var jToCheck = +elCell.dataset.j + j;
+            var iToPeek = (+elCell.dataset.i) + i;
+            var jToPeek = (+elCell.dataset.j) + j;
+            var elPeekedCell = gElTable.querySelector(`[data-i='${iToPeek}'][data-j='${jToPeek}']`);
+            if (!elPeekedCell) continue;
+            if (elPeekedCell.dataset.isOpened === 'true') continue;
+            if (gBoard[iToPeek][jToPeek]) elPeekedCell.innerText = gBoard[iToPeek][jToPeek];
+            elPeekedCell.style.backgroundColor = '#ccd36850';
+            elPeekedCell.style.cursor = 'pointer';
+            peekedCells.push(elPeekedCell);
         }
     }
+    gPeekMode = false;
+    gElPeekBtn.style = 'unset'
+    hidePeek(peekedCells);
+
+    var allTds = gElTable.querySelectorAll('td');
+    allTds.forEach(td => {
+        td.style.cursor = 'pointer'
+    });
+
 }
+
+function hidePeek(array) {
+    setTimeout(() => {
+
+        for (var idx = 0; idx < array.length; idx++) {
+            var peekedCell = array[idx];
+            var i = +peekedCell.dataset.i;
+            var j = +peekedCell.dataset.j;
+
+            if (gBoard[i][j]) peekedCell.innerText = '';
+            peekedCell.style.backgroundColor = 'unset';
+        }
+
+    }, 1000);
+}
+
+
+
+function hintSafeCell() {
+    if (gHints <= 0) return
+
+    //picks a random cell in gBoard and check it is not a mine:
+    var hintedCellRow = getRandomInt(0, gBoard.length);
+    var hintedCellCol = getRandomInt(0, gBoard[hintedCellRow].length);
+    var hintedCell = [hintedCellRow, hintedCellCol];
+    while (isArrayInMatrix(gMines, hintedCell)) {
+        hintedCellRow = getRandomInt(0, gBoard.length);
+        hintedCellCol = getRandomInt(0, gBoard[hintedCellRow].length);
+        hintedCell = [hintedCellRow, hintedCellCol];
+    }
+    //find and flash the cell:
+    var elRow = gElTable.querySelectorAll(`[data-i="${hintedCellRow}"]`);
+    var elCell;
+
+    for (var col = 0; col < elRow.length; col++) {
+        var currCell = elRow[col];
+        if (+currCell.dataset.j === hintedCellCol) {
+            elCell = currCell;
+            break
+        }
+    }
+    if (elCell.dataset.isOpened === 'true') hintSafeCell();
+    elCell.classList.add('hinted-safe')
+    setTimeout(() => {
+        elCell.style.transition = '0.8s';
+        elCell.classList.remove('hinted-safe')
+
+    }, 3500)
+    setTimeout(() => {
+        elCell.style.transition = '0.3s';
+    }, 5000)
+
+    gHints--;
+    gElHints.innerText = gHints;
+}
+
 
 
 

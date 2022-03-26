@@ -82,7 +82,8 @@ td {
 }
 
 .flag {
-    background-color: rgba(46, 151, 78, 0.678);
+    background-color: rgba(155, 121, 70, 0.678);
+    background-image: url("../img/red-flag.png");
 }
 
 

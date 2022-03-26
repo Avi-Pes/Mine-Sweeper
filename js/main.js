@@ -10,13 +10,17 @@ var gLives = 2;
 var gElTable = document.querySelector('table');
 var gElTimer = document.querySelector('.timer');
 var gElLives = document.querySelector('.lives');
-var gElMinesCounter = document.querySelector('.mines-counter')
+var gElMinesCounter = document.querySelector('.mines-counter');
+var gInterval = 0;
 var gTimeStart;
-var gEndTime
-var gInterval;
+var gTimerBlocked = false;
+var gEndTime;
+var gScore = 0;
+var gHighScore = 10;
 var gPeekMode = false;
 const EMPTY = '';
-const MINE = '*';
+const MINE = '💣';
+const MINE_BCG = '#DD4A48'
 
 
 
@@ -29,8 +33,13 @@ function init() {
     gBoard = createSquaredBoard(gSize);
     gMines = spreadMines(+gMinesAmount).sort();
     getAllNumbers(gBoard);
+    gInterval = 0;
+    gFlags = [];
     gElLives.innerText = gLives;
-    gElMinesCounter.innerText = gMinesAmount
+    gElMinesCounter.innerText = gMinesAmount;
+    gElTimer.innerText = '00.00s';
+    gTimerBlocked = false;
+    gScore = 0;
     renderMineField(gBoard, '.mine-field');
 
 
@@ -114,7 +123,7 @@ function renderMineField(matrixBoard, classToRenderIn) {
             var cellContent = matrixBoard[i][j]
             var cellClassName = (cellContent === MINE) ? 'mine-cell' : ''
             var data = (cellContent === MINE) ? " data-mine= 'true' " : " data-mine= 'false' "
-            tableStrHTML += `\t <td data-i="${i}" data-j="${j}" ${data} data-is-flagged="false" data-is-opened="false" onclick="cellClicked(this, ${i}, ${j})" class="${cellClassName}"  oncontextmenu="flagAdder(event)"></td>\n`
+            tableStrHTML += `\t <td data-i="${i}" data-j="${j}" ${data} data-is-flagged="false" data-is-opened="false" onclick="cellClicked(this, ${i}, ${j})" class="${cellClassName}"  oncontextmenu="flagToggle(event)"></td>\n`
                 // tableStrHTML += `\t <td data-i="${i}" data-j="${j}" onclick="cellClicked(this, ${i}, ${j})" class="${cellClassName}" >${cellContent}</td>\n`
 
         }
@@ -128,9 +137,7 @@ function renderMineField(matrixBoard, classToRenderIn) {
 function cellClicked(elCell) {
     var cellI = +elCell.dataset.i;
     var cellJ = +elCell.dataset.j;
-    if (gInterval === 0) {
-        timer();
-    }
+    timeHandler();
     if (elCell.classList.contains('opened-cell') || elCell.classList.contains('flag')) return
     checkGameOver(gBoard[cellI][cellJ]);
 
@@ -167,15 +174,15 @@ function openCell(elCell) {
     elCell.dataset.isOpened = "true";
 }
 
-function flagAdder(ev, fromRecursiveOpen = false) {
-    if (!fromRecursiveOpen) ev.preventDefault();
-    var elCell = (fromRecursiveOpen) ? ev : ev.srcElement
-    if (gInterval === 0) timer();
+function flagToggle(ev) {
+    ev.preventDefault();
+    var elCell = ev.srcElement
+    timeHandler();
 
     // console.log('=====>', 'elCell.dataset', elCell.dataset);
     var cellI = +elCell.dataset.i;
     var cellJ = +elCell.dataset.j;
-    if ((elCell.dataset.isFlagged === "true" || fromRecursiveOpen)) {
+    if ((elCell.dataset.isFlagged === "true")) {
         //for a flagged cell:
         if (elCell.innerText !== MINE) { //is already flagged or bombed cell:
             elCell.dataset.isFlagged = "false";
@@ -198,24 +205,19 @@ function flagAdder(ev, fromRecursiveOpen = false) {
     checkGameOver();
 }
 
-function recursiveOpener(elCell, fromRecursiveOpen = false) {
-    if (!fromRecursiveOpen) openCell(elCell);
+function recursiveOpener(elCell) {
     for (var i = -1; i < 2; i++) {
         for (var j = -1; j < 2; j++) { // 9 cells to check
             var iToCheck = +elCell.dataset.i + i;
             var jToCheck = +elCell.dataset.j + j;
             var checkedCell = document.querySelector(`[data-i='${iToCheck}'][data-j='${jToCheck}']`);
-            if (!checkedCell || checkedCell.dataset.isOpened === 'true' || checkedCell.dataset.mine === 'true') continue
+            if (!checkedCell || checkedCell.dataset.isOpened === 'true' || checkedCell.dataset.mine === 'true' || elCell.dataset.isFlagged === 'true') continue
                 //left with only numbers and empties to check:
-            if (elCell.dataset.isFlagged === 'true') {
-                flagAdder(checkedCell, true)
-            }
-
             if (gBoard[iToCheck][jToCheck] > 0) {
                 openCell(checkedCell);
             } else if (gBoard[iToCheck][jToCheck] === EMPTY) {
                 openCell(checkedCell);
-                recursiveOpener(checkedCell, true);
+                recursiveOpener(checkedCell);
             }
 
         }
@@ -270,15 +272,19 @@ function checkGameOver() {
 
 function gameLost() {
     //TODO modal, reset gParameters
-    timer(stop);
+    timeHandler('stop');
+    gTimerBlocked = true;
     console.log('*******Game Lost*******');
+    calculateHighScore()
 
 }
 
 function gameWon() {
     //TODO modal, reset gParameters
-    timer(stop);
+    timeHandler('stop');
+    gTimerBlocked = true;
     console.log('*******Game Won!*******');
+    calculateHighScore()
 }
 
 function mineClicked(elCell) {
@@ -290,7 +296,7 @@ function mineClicked(elCell) {
     gElMinesCounter.innerText = --gElMinesCounter.innerText
     checkGameOver();
 
-    elCell.style.backgroundColor = 'red';
+    elCell.style.backgroundColor = MINE_BCG;
     gLives--;
     gElLives.innerText = gLives;
 
@@ -306,38 +312,54 @@ function mineClicked(elCell) {
     if (gLives === 0) {
 
         for (var i = 0; i < gElMines.length; i++) {
-            gElMines[i].style.backgroundColor = 'red'
+            gElMines[i].style.backgroundColor = MINE_BCG
             gElMines[i].innerText = MINE
 
         }
     }
 }
 
-function timer(stop) {
-    if (checkGameOver() === true) return
-    if (!stop && gInterval === 0) {
+function timeHandler(request) {
+    if (gTimerBlocked) return
+    if (gInterval === 0) { // only when new game
+        // if (checkGameOver() === true) return
         gTimeStart = new Date;
-        gInterval = setInterval(timer, 100);
+        gInterval = setInterval(timeHandler, 100);
     }
 
     var currentTime = new Date - gTimeStart
-    currentTime = (currentTime / 1000).toFixed(2) + 's'
-    gElTimer.innerText = currentTime;
+    var currentTimeToDisplay = (currentTime / 1000).toFixed(2) + 's'
+    gElTimer.innerText = currentTimeToDisplay;
 
-    if (stop) {
-        var endTime = currentTime;
+    if (request === 'stop') {
+        var endTimeToDisplay = currentTimeToDisplay;
         clearInterval(gInterval);
-        gElTimer.innerText = endTime;
-        gEndTime = currentTime - gTimeStart;
+        gElTimer.innerText = endTimeToDisplay;
+        gEndTime = currentTime
     }
 }
 
 
+
 function chooseDifficulty(boardSize, MinesAmount) {
-    gLives = (MinesAmount === 2) ? 2 : 3
-    gSize = boardSize
-    gMinesAmount = MinesAmount
+    gLives = (MinesAmount === 2) ? 2 : 3;
+    gSize = boardSize;
+    gMinesAmount = MinesAmount;
+    timeHandler('stop');
     init()
+}
+
+function calculateHighScore() {
+    // (max time points)*(inverse time)*(unblown mines)*(lives left) + (consolation prize)
+
+    gScore = 1000000 * (1 / gEndTime) * (gMinesAmount - gElMinesCounter.innerText) * gLives;
+    gScore = Math.floor(gScore);
+
+    if (gScore > gHighScore) {
+        gHighScore = gScore;
+        document.querySelector('.high-score').innerText = `HIGH SCORE: ${gHighScore}`
+        console.log('*******NEW HIGH SCORE*******');
+    }
 }
 
 

@@ -1,10 +1,23 @@
 body {
-    background-color: antiquewhite;
+    background-color: #463f3fec;
     font-size: 20px;
+    text-align: center;
+    color: #E1D5D2;
+    background-image: url("../img/smoke_cloud_dark_border.png");
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 h1 {
-    background-color: rgb(97, 207, 125);
+    background-color: #6d5a77;
+    color: #382d2d;
+    margin: auto;
+    margin-bottom: 30px;
+    width: 600px;
+    border: 2px solid #8D6262;
+    border-radius: 25px 40px;
+    border-top-left-radius: 100px;
+    border-bottom-right-radius: 100px;
     font-family: Georgia, 'Times New Roman', Times, serif;
     font-size: 60px;
     text-decoration: underline;
@@ -12,18 +25,20 @@ h1 {
 
 div {
     /* height: 100px; */
-    margin: 50px;
+    margin: 10px;
     padding: 10px;
-    background-color: aquamarine;
     text-align: center;
-    overflow: auto;
 }
 
-
-/* TODO: header */
-
-
-/* TODO: controller */
+button {
+    padding: 10px;
+    font-size: 20px;
+    font-weight: 800;
+    background-color: #3e3d4b;
+    color: #E79A58;
+    cursor: pointer;
+    border: 1px solid #A55540;
+}
 
 .controller {
     padding: 10px;
@@ -34,63 +49,65 @@ h4 {
     padding: 5px;
 }
 
-span {
-    background-color: rgb(26, 24, 24);
-    padding: 3px;
-    color: rgb(204, 26, 26);
-    font-family: Stencil Std, fantasy;
-    font-weight: 300;
-    font-size: 30px;
-}
-
-
-/* TODO: game area =".game-container" */
-
 .game-container {
-    display: flex;
-    padding: 10px;
+    padding: 20px;
     max-width: fit-content;
-    justify-content: center;
     margin: auto;
-    background-color: rgb(49, 82, 82);
-    border-radius: 2%;
+    background-color: #4a454d;
+    border-radius: 0% 0% 5% 5%;
 }
-
-
-/* TODO: table/board */
 
 .mine-field {
-    background-color: hsl(0, 0%, 75%);
-    border: 2px solid rgb(77, 76, 76);
+    background-color: #bfbfbfd7;
+    border: 5px solid rgba(41, 36, 36, 0.925);
+    border-radius: 10px;
+    margin: auto;
+    margin-bottom: 0px;
+    padding: 3px;
 }
 
 td {
+    color: #29264d;
+    font-size: 20px;
     border: 2px solid rgb(103, 76, 104);
-    border-inline-style: 3px solid blue;
     border-radius: 10%;
     height: 30px;
     width: 30px;
     cursor: pointer;
     transition: 0.3s;
+    font-weight: 600;
+    outline: 1px #3a3669;
+    outline-offset: 0.01em;
+    outline-style: double;
+    /* box-shadow: -6px 8px 10px rgba(81, 41, 10, 0.1), 0px 2px 2px rgba(81, 41, 10, 0.2); */
 }
 
 td:hover {
-    background-color: hsla(0, 0%, 85%, 0.747);
+    background-color: hsla(0, 0%, 85%, 0.822);
+    /*
+  
+  .button-83:active {
+    background-color: #f3f4f6;
+    box-shadow: -1px 2px 5px rgba(81,41,10,0.15),0px 1px 1px rgba(81,41,10,0.15);
+    transform: translateY(0.125rem);
+  
+*/
 }
 
 .hinted-safe {
     background-color: darkorange;
 }
 
-body table.mine-field tr td.opened-cell,
-body table.mine-field tr td.opened-cell:hover {
-    background-color: hsla(226, 7%, 53%, 0.795);
+table.mine-field tr td.opened-cell,
+table.mine-field tr td.opened-cell:hover {
+    background-color: hsla(226, 7%, 53%, 0.796);
     cursor: default;
 }
 
-.mine-cell {
+
+/* .mine-cell {
     background-color: rgba(207, 96, 96, 0.61);
-}
+} */
 
 .flag,
 .flag:hover {
@@ -98,27 +115,62 @@ body table.mine-field tr td.opened-cell:hover {
     background-image: url("../img/red-flag.png");
 }
 
+.hud {
+    background-color: #4a454d;
+    /* width: 600px; */
+    margin: auto;
+    padding-top: 30px;
+    border-radius: 5px;
+    width: 490px;
+}
 
-/* TODO: buttons */
+.hud * {
+    background-color: #393232;
+    border: 0.5px solid #744233b0;
+    width: 100px;
+    margin: 10px;
+    padding: 10px;
+    color: rgb(197, 19, 19);
+    font-family: 'Franklin Gothic Medium', sans-serif;
+    font-weight: 300;
+    font-size: 25px;
+}
 
+.hint {
+    background-color: #58402b;
+    width: 150px;
+    margin-top: 0px;
+}
 
-/* TODO: un-clicked */
+.score,
+.high-score {
+    background-color: #1f1e2bcb;
+}
 
+.smiley {
+    margin: auto;
+    margin-top: 15px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-image: url("../img/Smiley_main.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 50px;
+    line-height: 160px;
+    color: #e9ce59e0;
+}
 
-/* TODO: clicked-empty */
-
-
-/* TODO: clicked-num */
-
-
-/* TODO: clicked-mine */
-
-
-/* TODO: clicked-flag */
-
-
-/* TODO: footer */
+.manual {
+    text-decoration: line-through;
+    color: rgb(83, 83, 83);
+}
 
 .footer {
+    text-align: left;
+    background-color: #393232;
+    width: 100%;
+    margin: 0px;
     margin-top: 70px;
+    padding: 10px;
 }

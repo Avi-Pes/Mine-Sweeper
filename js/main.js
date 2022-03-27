@@ -4,15 +4,17 @@ var gBoard = [];
 var gMines = [];
 var gElMines;
 var gFlags = [];
-var gSize = 4;
-var gMinesAmount = 2;
+var gSize = 8;
+var gMinesAmount = 12;
 var gLives = 2;
 var gHints = 3;
 var gElTable = document.querySelector('table');
 var gElTimer = document.querySelector('.timer');
 var gElLives = document.querySelector('.lives');
 var gElHints = document.querySelector('.hints-counter');
+var gElManualBtn = document.querySelector('.manual');
 var gElMinesCounter = document.querySelector('.mines-counter');
+var gElScore = document.querySelector('.score');
 var gElPeekBtn;
 var gInterval = 0;
 var gTimeStart;
@@ -21,9 +23,12 @@ var gEndTime;
 var gScore = 0;
 var gHighScore = 10;
 var gPeekMode = false;
+var gManualSpread = false;
+var gIs7Boom = false;
 const EMPTY = '';
 const MINE = '💣';
 const MINE_BCG = '#DD4A48'
+const OPEN_BCG = '#7f8390cb'
 
 
 
@@ -34,19 +39,25 @@ const MINE_BCG = '#DD4A48'
 
 function init() {
     gBoard = createSquaredBoard(gSize);
-    gMines = spreadMines(+gMinesAmount).sort();
+    gMines = getMode()
     getAllNumbers(gBoard);
     gInterval = 0;
     gFlags = [];
-    gPeekMode = false
+    gPeekMode = false;
+    gLives = (gSize === 4) ? 2 : 3;
     gElLives.innerText = gLives;
     gHints = 3;
     gElHints.innerText = gHints;
     gElMinesCounter.innerText = gMinesAmount;
-    gElTimer.innerText = '00.00s';
+    gElTimer.innerText = '0.00s';
     gTimerBlocked = false;
     gScore = 0;
+    gElScore.innerText = '000'
+
+
     renderMineField(gBoard, '.mine-field');
+    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_main.png')"
+    document.querySelector('.smiley').innerText = '';
 
 
 
@@ -64,23 +75,25 @@ function init() {
 
 
 
-function spreadMines(amount) {
+function autoSpreadMines(amount) {
     var cellValue
     var mines = []
-    for (var i = 0; i < amount;) {
-        //DONE: change "4" to matrix order
+    gElManualBtn.style.backgroundColor = (gManualSpread) ? 'yellow' : 'gray';
+
+
+    for (var i = 0; i < amount; i++) {
         var row = getRandomInt(0, gSize);
         var col = getRandomInt(0, gSize);
-        // DONE: stop overlapping mines from deploying
 
         cellValue = gBoard[row][col];
         if (cellValue === MINE) continue; //repeat if occupied
         gBoard[+row][+col] = MINE;
         mines.push([+row, +col]);
-        i++;
+
     }
     return mines
 }
+
 
 function getAllNumbers(board) {
     var number = 0;
@@ -119,6 +132,7 @@ function countAdjacentMines(cellI, cellJ) {
     return res;
 }
 
+
 function renderMineField(matrixBoard, classToRenderIn) {
 
     var tableStrHTML = ''
@@ -139,6 +153,7 @@ function renderMineField(matrixBoard, classToRenderIn) {
     var elBoard = document.querySelector(classToRenderIn)
     elBoard.innerHTML = tableStrHTML
 }
+
 
 function cellClicked(elCell) {
 
@@ -185,11 +200,14 @@ function cellClicked(elCell) {
 
 }
 
+
 function openCell(elCell) {
     elCell.innerText = gBoard[+elCell.dataset.i][+elCell.dataset.j];
     elCell.classList.add('opened-cell');
+    elCell.style.backgroundColor = '#7f8390cb';
     elCell.dataset.isOpened = "true";
 }
+
 
 function flagToggle(ev) {
     ev.preventDefault();
@@ -225,6 +243,7 @@ function flagToggle(ev) {
     checkGameOver();
 }
 
+
 function recursiveOpener(elCell) {
     for (var i = -1; i < 2; i++) {
         for (var j = -1; j < 2; j++) { // 9 cells to check
@@ -244,6 +263,7 @@ function recursiveOpener(elCell) {
     }
 
 }
+
 
 function checkGameOver() {
     var isGameOver = false;
@@ -290,22 +310,30 @@ function checkGameOver() {
     return isGameOver
 }
 
+
 function gameLost() {
     //TODO modal, reset gParameters
     timeHandler('stop');
     gTimerBlocked = true;
     console.log('*******Game Lost*******');
-    calculateHighScore()
+    calculateHighScore();
+    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_lose.png')"
+    document.querySelector('.smiley').innerText = 'Loser...'
+
 
 }
+
 
 function gameWon() {
     //TODO modal, reset gParameters
     timeHandler('stop');
     gTimerBlocked = true;
     console.log('*******Game Won!*******');
-    calculateHighScore()
+    calculateHighScore();
+    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_win.png')"
+    document.querySelector('.smiley').innerText = 'VICTORY!!!'
 }
+
 
 function mineClicked(elCell) {
     openCell(elCell)
@@ -339,6 +367,7 @@ function mineClicked(elCell) {
     }
 }
 
+
 function timeHandler(request) {
     if (gTimerBlocked) return
     if (gInterval === 0) { // only when new game
@@ -360,19 +389,20 @@ function timeHandler(request) {
 }
 
 
-
 function chooseDifficulty(boardSize, MinesAmount) {
     gLives = (MinesAmount === 2) ? 2 : 3;
     gSize = boardSize;
     gMinesAmount = MinesAmount;
     timeHandler('stop');
-    init()
+    gManualSpread = false;
+    init();
 }
+
 
 function calculateHighScore() {
     // (max time points)*(inverse time)*(unblown mines)*(lives left) + (consolation prize)
 
-    gScore = 1000000 * (1 / gEndTime) * (gMinesAmount - gElMinesCounter.innerText) * gLives;
+    gScore = 1000000 * (1 / gEndTime) * (gMinesAmount - gElMinesCounter.innerText) * gLives - 1 * (3 - gHints) * 100;
     gScore = Math.floor(gScore);
 
     if (gScore > gHighScore) {
@@ -380,10 +410,11 @@ function calculateHighScore() {
         document.querySelector('.high-score').innerText = `HIGH SCORE: ${gHighScore}`
         console.log('*******NEW HIGH SCORE*******');
     }
+
+    renderScore()
 }
 
 
-//TODO: 
 function hintPeek(btn) {
     if (gHints <= 0) return
     gElPeekBtn = btn
@@ -402,6 +433,7 @@ function hintPeek(btn) {
 
 
 }
+
 
 function hintPeekRender(elCell) {
     var peekedCells = [];
@@ -429,6 +461,7 @@ function hintPeekRender(elCell) {
 
 }
 
+
 function hidePeek(array) {
     setTimeout(() => {
 
@@ -443,7 +476,6 @@ function hidePeek(array) {
 
     }, 1000);
 }
-
 
 
 function hintSafeCell() {
@@ -484,7 +516,92 @@ function hintSafeCell() {
     gElHints.innerText = gHints;
 }
 
+function renderScore() {
+    var elScore = document.querySelector('.score');
+    elScore.innerText = `SCORE: ${gScore}`;
+    console.log('=====>', 'elScore', elScore);
+}
 
+function getMode() {
+    var mines = [];
+
+    if (gIs7Boom) mines = make7BoomMines().sort;
+    else if (gManualSpread) mines = manualSpreadMines(+gMinesAmount).sort();
+    else mines = autoSpreadMines(+gMinesAmount).sort();
+
+    return mines
+}
+
+function go7Boom() {
+    alert('Lets go 7-Boom!')
+    gIs7Boom = true;
+    init();
+}
+
+function make7BoomMines() {
+    var mines = [];
+    var cellId = 0;
+
+
+    for (var i = 0; i < gSize; i++) {
+        for (var j = 0; j < gSize; j++) {
+            cellId++
+            var cell = gBoard[i][j];
+            if (cellId % 7 === 0 || cellId.toString().indexOf(7) !== (-1)) {
+                gBoard[i][j] = MINE;
+                mines.push([i, j])
+            }
+
+        }
+    }
+
+    gIs7Boom = false;
+    return mines
+}
+
+
+//TODO LIST:
+
+
+//TODO: fix manual mode
+
+// function goManual(btn) {
+//     gManualSpread = !gManualSpread;
+//     alert('manual spread');
+//     if (gManualSpread) manualSpreadMines();
+//     init();
+
+// }
+
+// function manualSpreadMines() {
+
+//     gElManualBtn.style.backgroundColor = (gManualSpread) ? 'yellow' : 'gray';
+//     var mines = [];
+//     var cellValue;
+
+//     for (var i = 0; i < gMinesAmount; i++) {
+//         var cellRow = +prompt(`Please enter your desired ${i} mine row: \n -Type \'stop\' to randomize the rest.`);
+//         if (cellRow === 'stop' || cellRow === '\'stop\'' || cellRow === Nan) break;
+//         var cellCol = +prompt(`Please enter your desired ${i} mine column: \n -Type \'stop\' to randomize the rest.`);
+//         if (cellCol === 'stop' || cellCol === '\'stop\'' || cellCol === Nan) break;
+//         var userCell = [cellRow, cellCol];
+//         if (typeof cellRow === 'number' || typeof cellCol === 'number') gMines.push(+userCell);
+//     }
+
+//     for (var i = 0; i < gMinesAmount - mines.length; i++) {
+//         var row = getRandomInt(0, gSize);
+//         var col = getRandomInt(0, gSize);
+
+//         cellValue = gBoard[row][col];
+//         if (cellValue === MINE) continue; //repeat if occupied
+//         gBoard[+row][+col] = MINE;
+//         mines.push([+row, +col]);
+
+//     }
+
+
+//     return mines
+// }
 
 
 //DONE: function make a board
@@ -502,10 +619,10 @@ function hintSafeCell() {
 //DONE:fix timer bug run again after game
 //DONE:Support 3 difficulties levels of the game --- Beginner (4*4 with 2 MINES), Medium (8 * 8 with 12 MINES), Expert (12 * 12 with 30 MINES)
 //DONE:mines left indicator
-//TODO:peek - hint
-//TODO:safe cell - hint
-//TODO:score/high-score
-//TODO:smiley rest button
+//DONE:peek - hint
+//DONE:safe cell - hint
+//DONE:score/high-score
+//TODO:smiley reset button
 //TODO: manual deploy mode
 //TODO: 7 boom mode
 //TODO:design lives

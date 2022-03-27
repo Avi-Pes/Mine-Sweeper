@@ -23,57 +23,72 @@
 
 
     <div class="controller ">
-        controller: score difficulty high-score...
+        <button class="scores, score">SCORE: 000</button>
         <button class="difficulty" onclick="chooseDifficulty(4,2)">Easy</button>
         <button class="difficulty" onclick="chooseDifficulty(8,12)">Normal</button>
         <button class="difficulty" onclick="chooseDifficulty(12,30)">Hard</button>
-        <span> <button class="high-score">HIGH-SCORE: 000</button></span>
+        <button class="scores, high-score">HIGH-SCORE: 000</button>
     </div>
 
 
-    <h4>thead: startBtn, timer, mines left, lives hint:peek, hint:safe zone</h4>
-    <h4>Time:<span class="timer">00:00</span> | | Lives:<span class="lives">3</span> | | Mines:<span class="mines-counter">2</span> | | Hints:<span class="hints-counter">3</span> | | <button onclick="hintSafeCell()">Hint</button> | | <button onclick="hintPeek(this)">Peek</button></h4>
+    <div class="hud">
+        <span class="timer">00:00</span> Mines:
+        <span class="mines-counter">2</span> Lives:
+
+        <span class="lives">3</span> Hints:
+        <span class="hints-counter">3</span>
+
+        <br>
+        <div class="smiley" onclick="init()"></div>
+        <br>
+    </div>
+
+
     <div class="game-container ">
 
         <table class="mine-field">
             <tr>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
             </tr>
             <tr>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
             </tr>
             <tr>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
             </tr>
             <tr>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
-                <td>td</td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
             </tr>
         </table>
 
+        <br>
+        <br>
+        <button class="hint" onclick="hintPeek(this)">🪄Peek🪄</button>
+        <button class="hint" onclick="hintSafeCell()">🪄Hint🪄</button>
     </div>
     <!-- end of '.game-container' -->
 
 
     <!-- TODO: move menu to side maybe? -->
     <div class="menu ">
-        menu: 7BoomMode ManualMode
+        <button class="menual" onclick="go7Boom()">7-BOOM Mode</button> <button class="manual" onclick="goManual(this)">Manual</button>
     </div>
 
 
     <div class="footer ">
-        Footer
+        Avi Pesach ©offeeRights 2022
     </div>
 
 

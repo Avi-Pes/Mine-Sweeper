@@ -52,14 +52,11 @@ function init() {
     gElTimer.innerText = '0.00s';
     gTimerBlocked = false;
     gScore = 0;
-    gElScore.innerText = '000'
-
+    gElScore.innerText = 'SCORE: 0';
 
     renderMineField(gBoard, '.mine-field');
-    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_main.png')"
+    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_main.png')";
     document.querySelector('.smiley').innerText = '';
-
-
 
     console.log('gBoard:');
     console.table(gBoard);

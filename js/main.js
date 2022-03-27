@@ -55,7 +55,7 @@ function init() {
     gElScore.innerText = 'SCORE: 0';
 
     renderMineField(gBoard, '.mine-field');
-    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_main.png')";
+    document.querySelector('.smiley').style.backgroundImage = "url('img/Smiley_main.png')";
     document.querySelector('.smiley').innerText = '';
 
     console.log('gBoard:');
@@ -314,7 +314,7 @@ function gameLost() {
     gTimerBlocked = true;
     console.log('*******Game Lost*******');
     calculateHighScore();
-    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_lose.png')"
+    document.querySelector('.smiley').style.backgroundImage = "url('img/Smiley_lose.png')"
     document.querySelector('.smiley').innerText = 'Loser...'
 
 
@@ -327,7 +327,7 @@ function gameWon() {
     gTimerBlocked = true;
     console.log('*******Game Won!*******');
     calculateHighScore();
-    document.querySelector('.smiley').style.backgroundImage = "url('../img/Smiley_win.png')"
+    document.querySelector('.smiley').style.backgroundImage = "url('img/Smiley_win.png')"
     document.querySelector('.smiley').innerText = 'VICTORY!!!'
 }
 
